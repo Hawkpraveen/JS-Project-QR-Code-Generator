@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h1 class="text-center">QR Code Generator</h1>
+            <div class="mb-3">
+                <label for="text" class="form-label">Enter text or URL:</label>
+                <input type="text" class="form-control" id="text" placeholder="Enter text to generate QR code">
+            </div>
+            <button class="btn btn-primary btn-block col-12" onclick="generateQRCode()">Generate QR Code</button>
+            <div class="mt-5 text-center" id="qrcode"></div>
+            <button id="newCodeBtn" class="btn btn-success btn-block col-12 mt-3" style="display:none;" onclick="resetQRCode()">Generate New QR Code</button>
+        </div>
+    </div>
+
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6 text-center">
+            <button class="btn btn-secondary" id="showStoredCodesBtn" onclick="toggleStoredCodes()">Show Previous QR Codes</button>
+            <button class="btn btn-danger" id="closeStoredCodesBtn" style="display:none;" onclick="toggleStoredCodes()">Close Previous QR Codes</button>
+        </div>
+    </div>
+
+    <div class="row justify-content-center mt-3">
+        <div class="col-md-6">
+            <div id="stored-codes" class="d-flex flex-wrap justify-content-center gap-3" style="visibility: hidden; height: 0;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function generateQRCode() {
+        const text = document.getElementById('text').value;
+        if (text.trim() === '') {
+            alert('Please enter some text or URL');
+            return;
+        }
+
+        const qrcodeContainer = document.getElementById('qrcode');
+        qrcodeContainer.innerHTML = ''; // Clear previous QR code
+
+        new QRCode(qrcodeContainer, {
+            text: text,
+            width: 256,
+            height: 256,
+            correctLevel: QRCode.CorrectLevel.H,
+        });
+
+        setTimeout(() => {
+            const qrCodeImg = qrcodeContainer.querySelector('img').src;
+            saveQRCode(text, qrCodeImg);
+            document.getElementById('newCodeBtn').style.display = 'block'; // Show new code button
+        }, 500);
+    }
+
+    function saveQRCode(text, imgSrc) {
+        const storedCodes = JSON.parse(localStorage.getItem('qrCodes')) || [];
+        storedCodes.push({ text: text, imgSrc: imgSrc });
+        localStorage.setItem('qrCodes', JSON.stringify(storedCodes));
+    }
+
+    function toggleStoredCodes() {
+        const storedCodesContainer = document.getElementById('stored-codes');
+        const showButton = document.getElementById('showStoredCodesBtn');
+        const closeButton = document.getElementById('closeStoredCodesBtn');
+
+        if (storedCodesContainer.style.visibility === 'hidden') {
+            storedCodesContainer.innerHTML = ''; // Clear previous entries
+
+            const storedCodes = JSON.parse(localStorage.getItem('qrCodes')) || [];
+            storedCodes.forEach(code => {
+                const codeContainer = document.createElement('div');
+                codeContainer.className = 'text-center';
+
+                const img = document.createElement('img');
+                img.src = code.imgSrc;
+                img.alt = code.text;
+                img.style.width = '128px';
+                img.style.height = '128px';
+                img.className = 'img-thumbnail';
+
+                const caption = document.createElement('p');
+                caption.textContent = code.text;
+
+                codeContainer.appendChild(img);
+                codeContainer.appendChild(caption);
+                storedCodesContainer.appendChild(codeContainer);
+            });
+
+            storedCodesContainer.style.visibility = 'visible';
+            storedCodesContainer.style.height = 'auto';
+            showButton.style.display = 'none';
+            closeButton.style.display = 'block';
+        } else {
+            storedCodesContainer.style.visibility = 'hidden';
+            storedCodesContainer.style.height = '0';
+            showButton.style.display = 'block';
+            closeButton.style.display = 'none';
+        }
+    }
+
+    function resetQRCode() {
+        document.getElementById('qrcode').innerHTML = '';
+        document.getElementById('text').value = '';
+        document.getElementById('newCodeBtn').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>
